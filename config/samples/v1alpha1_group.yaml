@@ -6,10 +6,10 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: platformadmin-group
 spec:
-  group_name: platformadmin_group
+  group_name: dataverse-aggregate-bookingsmaster
   members:
-  - user1
-  - user2
+  - shikgupt
   backends:
   - name: fivetran
     type: fivetran
+  
