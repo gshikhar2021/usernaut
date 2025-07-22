@@ -17,7 +17,6 @@ limitations under the License.
 package config
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/redhat-data-and-ai/usernaut/pkg/cache"

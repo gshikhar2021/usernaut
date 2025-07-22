@@ -2,6 +2,8 @@ package utils
 
 import (
 	"testing"
+
+	"github.com/redhat-data-and-ai/usernaut/pkg/config"
 )
 
 type TestStruct struct {
@@ -244,5 +246,93 @@ func TestMapToStruct_EmptyMap(t *testing.T) {
 	// All fields should have their zero values
 	if result.Name != "" || result.Age != 0 || result.Active != false {
 		t.Errorf("Expected zero values for all fields")
+	}
+}
+
+func TestGetTransformGroupName(t *testing.T) {
+	mockCfg := &config.AppConfig{
+		Pattern: map[string][]config.PatternEntry{
+			"rover": {
+				{
+					Input:  `^([^\\-]+)$`,
+					Output: `$1`,
+				},
+			},
+			"default": {
+				{
+					Input:  `dataverse-platform-([a-z0-9]+)`,
+					Output: "$1_group",
+				},
+				{
+					Input:  `dataverse-source-([a-z0-9]+)`,
+					Output: "$1_group",
+				},
+				{
+					Input:  `dataverse-aggregate-([a-z0-9]+)`,
+					Output: "$1_group",
+				},
+				{
+					Input:  `dataverse-consumer-([a-z0-9]+-[a-z0-9]+)`,
+					Output: "$1|replace(-,_)_group",
+				},
+			},
+		},
+	}
+
+	type Testing struct {
+		input        string
+		output       string
+		backend_Name string
+	}
+
+	test_data := []Testing{
+		{
+			input:        "dataverse-platform-platformadmin",
+			output:       "platformadmin_group",
+			backend_Name: "fivetran",
+		},
+		{
+			input:        "dataverse-source-sfsales",
+			output:       "sfsales_group",
+			backend_Name: "fivetran",
+		},
+		{
+			input:        "dataverse-aggregate-bookingsmaster",
+			output:       "bookingsmaster_group",
+			backend_Name: "fivetran",
+		},
+		{
+			input:        "dataverse-consumer-bookingsmaster-marts",
+			output:       "bookingsmaster_marts_group",
+			backend_Name: "fivetran",
+		},
+		{
+			input:        "No_Mapping",
+			output:       "",
+			backend_Name: "fivetran",
+		},
+		{
+			input:        "dataverse_platform_platformadmin",
+			output:       "dataverse_platform_platformadmin",
+			backend_Name: "rover",
+		},
+		{
+			input:        "dataverse-platform-platformadmin",
+			output:       "",
+			backend_Name: "rover",
+		},
+	}
+
+	for _, val := range test_data {
+		expectedString := val.output
+		gotString, err := GetTransformedGroupName(mockCfg, val.backend_Name, val.input)
+		if err != nil {
+			t.Fatalf("Got Error %v", err)
+		}
+
+		//Now compare expected and resultant string
+		if expectedString != gotString {
+			t.Errorf("Expected and the Resultant String doesn't match [Wrong Transformation]")
+		}
 	}
 }
